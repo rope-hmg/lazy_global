@@ -15,6 +15,6 @@ jobs:
     - uses: actions/setup-node@v1.1.0
       with:
         node-version: '@lts'
-      
+
     - name: Run tests
       run: npm run test

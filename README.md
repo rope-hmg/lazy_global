@@ -1,6 +1,6 @@
-# Absolute Unit Test
+# Lazy Global
 
-A minimal unit testing library
+Some utilities for creating lazily evaluated objects
 
 ## Example
 
