@@ -15,5 +15,7 @@ module.exports = {
         project: "./tsconfig.json",
     },
     plugins: ["@typescript-eslint"],
-    rules: {},
+    rules: {
+        "no-empty": "off"
+    },
 };

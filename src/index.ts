@@ -1,8 +1,7 @@
-export type OnSuccessFn = () => void;
-export type InitialiserFn<T> = () => T;
-export type WithRetryInitialiserFn<T> = (onSuccess: OnSuccessFn) => T;
-export type LazyGetterFn<T> = () => T;
+type NonAsync<T> = T extends Promise<any> ? never : T;
+type LazyGetterFn<T> = () => T;
 
+export type InitialiserFn<T> = () => T;
 export interface ILazy<T> {
     value: T;
 }
@@ -18,38 +17,43 @@ function createLazyObject<T>(getterFn: LazyGetterFn<T>): ILazy<T> {
     return lazy as ILazy<T>;
 }
 
-function replaceGetterFn<T>(lazy: ILazy<T>, value: T): void {
+function replaceGetterFn<T>(lazy: ILazy<T>, getterFn: () => T): void {
     Object.defineProperty(lazy, "value", {
         configurable: false,
-        get: () => value,
+        get: getterFn,
     });
 }
 
-export function lazy<T>(initialiser: InitialiserFn<T>): ILazy<T> {
+export function lazy<T>(initialiser: InitialiserFn<NonAsync<T>>): ILazy<T> {
     let value: T;
 
     const lazy = createLazyObject(() => {
         value = initialiser();
-        replaceGetterFn(lazy, value);
+        replaceGetterFn(lazy, () => value);
         return value;
     });
 
     return lazy;
 }
 
-export function lazyWithRetry<T>(initialiser: WithRetryInitialiserFn<T>): ILazy<T> {
+export function lazyPromise<T>(initialiser: InitialiserFn<Promise<T>>): ILazy<Promise<T>> {
     let value: T;
-    let initialisedSuccessfully = false;
+    let promise: Promise<T> | undefined;
 
-    const onSuccess: OnSuccessFn = () => {
-        initialisedSuccessfully = true;
-    };
-
-    const lazy = createLazyObject(() => {
-        value = initialiser(onSuccess);
-        if (initialisedSuccessfully) {
-            replaceGetterFn(lazy, value);
+    const lazy = createLazyObject(async () => {
+        if (!promise) {
+            promise = initialiser();
         }
+
+        try {
+            value = await promise;
+        } catch (error) {
+            promise = undefined;
+            throw error;
+        }
+
+        replaceGetterFn(lazy as any, async () => value);
+
         return value;
     });
 

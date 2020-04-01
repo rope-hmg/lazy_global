@@ -15,21 +15,21 @@ function doSomething() {
 ```
 
 ```javascript
-import { lazyWithRetry } from "lazy_global";
+import { lazyPromise } from "lazy_global";
 
-const LAZY_OBJECT = lazyWithRetry((onSuccess) => {
+const LAZY_OBJECT = lazyPromise(async () => {
     if (somethingThatCanFail()) {
-        onSuccess();
         return "Some expensive to compute value";
     }
 
-    return "Failure value";
+    return Promise.reject("Failure value");
 });
 
 function doSomething() {
-    const lazyValue = LAZY_OBJECT.value;
-
-    if (lazyValue === "Failure value") {
+    try {
+        const lazyValue = LAZY_OBJECT.value;
+    } catch (error) {
+        console.assert(error === "Failure value");
         // Handle the case where the value is not available.
     }
 }
