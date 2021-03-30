@@ -1,61 +1,47 @@
 type NonAsync<T> = T extends Promise<any> ? never : T;
-type LazyGetterFn<T> = () => T;
 
 export type InitialiserFn<T> = () => T;
-export interface ILazy<T> {
-    value: T;
+
+export interface Lazy<T> {
+    value(): T;
 }
 
-function createLazyObject<T>(getterFn: LazyGetterFn<T>): ILazy<T> {
-    const lazy = {};
-
-    Object.defineProperty(lazy, "value", {
-        configurable: true,
-        get: getterFn,
-    });
-
-    return lazy as ILazy<T>;
-}
-
-function replaceGetterFn<T>(lazy: ILazy<T>, getterFn: () => T): void {
-    Object.defineProperty(lazy, "value", {
-        configurable: false,
-        get: getterFn,
-    });
-}
-
-export function lazy<T>(initialiser: InitialiserFn<NonAsync<T>>): ILazy<T> {
+export function lazy<T>(initialiser: InitialiserFn<NonAsync<T>>): Lazy<T> {
     let value: T;
 
-    const lazy = createLazyObject(() => {
-        value = initialiser();
-        replaceGetterFn(lazy, () => value);
-        return value;
-    });
+    const lazy: Lazy<T> = {
+        value() {
+            value = initialiser();
+            lazy.value = () => value;
+            return value;
+        },
+    };
 
     return lazy;
 }
 
-export function lazyPromise<T>(initialiser: InitialiserFn<Promise<T>>): ILazy<Promise<T>> {
+export function lazyPromise<T>(initialiser: InitialiserFn<Promise<T>>): Lazy<Promise<T>> {
     let value: T;
     let promise: Promise<T> | undefined;
 
-    const lazy = createLazyObject(async () => {
-        if (!promise) {
-            promise = initialiser();
-        }
+    const lazy: Lazy<Promise<T>> = {
+        async value() {
+            if (!promise) {
+                promise = initialiser();
+            }
 
-        try {
-            value = await promise;
-        } catch (error) {
-            promise = undefined;
-            throw error;
-        }
+            try {
+                value = await promise;
+            } catch (error) {
+                promise = undefined;
+                throw error;
+            }
 
-        replaceGetterFn(lazy as any, async () => value);
+            lazy.value = async () => value;
 
-        return value;
-    });
+            return value;
+        },
+    };
 
     return lazy;
 }

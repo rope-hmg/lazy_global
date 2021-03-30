@@ -7,9 +7,9 @@ runTests(
             let evalCount = 0;
             const lazyString = lazy(() => ((evalCount += 1), "some complicated and expensive thing"));
 
-            lazyString.value;
-            lazyString.value;
-            lazyString.value;
+            lazyString.value();
+            lazyString.value();
+            lazyString.value();
 
             assertEq(evalCount, 1);
         }
@@ -17,9 +17,9 @@ runTests(
         "lazy should always evaluate to the same value"() {
             const lazyString = lazy(() => "some complicated and expensive thing");
 
-            assertEq(lazyString.value, "some complicated and expensive thing");
-            assertEq(lazyString.value, "some complicated and expensive thing");
-            assertEq(lazyString.value, "some complicated and expensive thing");
+            assertEq(lazyString.value(), "some complicated and expensive thing");
+            assertEq(lazyString.value(), "some complicated and expensive thing");
+            assertEq(lazyString.value(), "some complicated and expensive thing");
         }
 
         async "lazyPromise should only reevaluate if it failed"() {
@@ -33,15 +33,15 @@ runTests(
             });
 
             try {
-                await lazyString.value;
+                await lazyString.value();
             } catch {}
 
             try {
-                await lazyString.value;
+                await lazyString.value();
             } catch {}
 
             try {
-                await lazyString.value;
+                await lazyString.value();
             } catch {}
 
             assertEq(evalCount, 2);
@@ -58,21 +58,21 @@ runTests(
             });
 
             try {
-                await lazyString.value;
+                await lazyString.value();
                 assert(false, "This code should never be executed");
             } catch (error) {
                 assertEq(error, "failure");
             }
 
             try {
-                await lazyString.value;
+                await lazyString.value();
                 assert(false, "This code should never be executed");
             } catch (error) {
                 assertEq(error, "failure");
             }
 
             try {
-                assertEq(await lazyString.value, "success");
+                assertEq(await lazyString.value(), "success");
             } catch {
                 assert(false, "This code should never be executed");
             }
