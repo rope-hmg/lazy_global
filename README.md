@@ -10,7 +10,7 @@ import { lazy } from "lazy_global";
 const LAZY_OBJECT = lazy(() => "Some expensive to compute value");
 
 function doSomething() {
-    const lazyValue = LAZY_OBJECT.value;
+    const lazyValue = LAZY_OBJECT.value();
 }
 ```
 
@@ -27,7 +27,7 @@ const LAZY_OBJECT = lazyPromise(async () => {
 
 function doSomething() {
     try {
-        const lazyValue = LAZY_OBJECT.value;
+        const lazyValue = LAZY_OBJECT.value();
     } catch (error) {
         console.assert(error === "Failure value");
         // Handle the case where the value is not available.
